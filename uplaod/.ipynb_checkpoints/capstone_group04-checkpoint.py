@@ -121,7 +121,7 @@ def infer_feature_columns(
     numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
     features = [c for c in numeric_cols if c not in drop_like]
     if not features:
-        raise ValueError("cannot find numeric feature columns for modeling.")
+        raise ValueError("未找到可用于建模的数值特征列。")
     return features
 
 def train_decision_tree_classifier(
@@ -160,14 +160,11 @@ def train_decision_tree_classifier(
 
     if param_grid is None:
         param_grid = {
-            "clf__criterion": ["gini", "entropy", "log_loss"],
-            "clf__max_depth": [None, 12, 16],
-            "clf__min_samples_leaf": [1, 2, 5],
-            "clf__min_samples_split": [2, 4, 6],
-            "clf__ccp_alpha": [0.0, 1e-7, 1e-6, 1e-5]
+            "clf__max_depth": [3, 4, 5, 7, 9],          
+            "clf__min_samples_leaf": [5, 10, 20],       
+            "clf__min_samples_split": [10, 20, 40],     
+            "clf__ccp_alpha": [0.0, 0.001, 0.005, 0.01] 
         }
-
-         
 
     cv = StratifiedKFold(n_splits=cv_splits, shuffle=True, random_state=random_state)
     gs = GridSearchCV(
@@ -181,7 +178,7 @@ def train_decision_tree_classifier(
     gs.fit(X_train, y_train)
     best_model: Pipeline = gs.best_estimator_
 
- 
+
     y_pred = best_model.predict(X_test)
     acc = accuracy_score(y_test, y_pred)
     f1m = f1_score(y_test, y_pred, average="macro")
@@ -198,6 +195,7 @@ def train_decision_tree_classifier(
         "classification_report": report
     }
     return best_model, (X_test, y_test, y_pred), summary
+
 
 def train_decision_tree_classifier_simple(
     df: pd.DataFrame,
